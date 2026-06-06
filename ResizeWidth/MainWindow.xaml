@@ -1,0 +1,178 @@
+<Window x:Class="ResizeWidth.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ResizeWidth"
+        mc:Ignorable="d"
+        Title="ResizeWidth" Height="550" Width="540"
+        Icon="app.ico"
+        ResizeMode="CanResizeWithGrip"
+        Activated="Window_Activated">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="5*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Window list -->
+        <DockPanel Grid.Row="0" Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" Text="Windows (top → resize target)" FontSize="11"
+                       Foreground="Gray" Margin="0,0,0,4"/>
+            <ListBox x:Name="WindowListBox"
+                     SelectionMode="Single"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="2">
+                             <ToggleButton IsChecked="{Binding IsIgnored}"
+                                           Width="18" Height="18"
+                                           ToolTip="Ignore this window for hotkey resize"
+                                           Margin="0,0,4,0" VerticalAlignment="Center">
+                                 <ToggleButton.Template>
+                                     <ControlTemplate TargetType="ToggleButton">
+                                         <Border x:Name="Bd" BorderBrush="Gray" BorderThickness="1"
+                                                 CornerRadius="2" Background="Transparent">
+                                             <TextBlock x:Name="Txt" Text="✕" FontSize="9"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Foreground="LightGray"/>
+                                         </Border>
+                                         <ControlTemplate.Triggers>
+                                             <Trigger Property="IsChecked" Value="True">
+                                                 <Setter TargetName="Bd" Property="Background" Value="#FFEE8800"/>
+                                                 <Setter TargetName="Bd" Property="BorderBrush" Value="#FFCC6600"/>
+                                                 <Setter TargetName="Txt" Property="Foreground" Value="White"/>
+                                             </Trigger>
+                                             <Trigger Property="IsMouseOver" Value="True">
+                                                 <Setter TargetName="Bd" Property="BorderBrush" Value="#FF888888"/>
+                                             </Trigger>
+                                         </ControlTemplate.Triggers>
+                                     </ControlTemplate>
+                                 </ToggleButton.Template>
+                             </ToggleButton>
+                             <Image Source="{Binding Icon}" Width="16" Height="16"
+                                    RenderOptions.BitmapScalingMode="HighQuality"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
+                             <StackPanel VerticalAlignment="Center">
+                                 <TextBlock Text="{Binding Title}" FontSize="12"
+                                            TextTrimming="CharacterEllipsis" MaxWidth="260"/>
+                                 <TextBlock Text="{Binding ProcessName}" FontSize="10"
+                                            Foreground="Gray"/>
+                             </StackPanel>
+                         </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!-- Window action buttons -->
+        <StackPanel Grid.Row="0" Grid.Column="2" VerticalAlignment="Top" Width="140">
+            <TextBlock Text="Actions" FontSize="11" Foreground="Gray" Margin="0,0,0,4"/>
+
+            <Button x:Name="BtnMaxRight"
+                    Padding="8,6" Margin="0,0,0,6"
+                    Click="BtnMaxRight_Click"
+                    ToolTip="Toggle window width between full+right 50% and full+right 33%">
+                <TextBlock TextAlignment="Center">
+                    <Run Text="Width: full + right"/><LineBreak/>
+                    <Run Text="Ctrl+Alt+Shift+Right" FontSize="10" Foreground="Gray"/>
+                </TextBlock>
+            </Button>
+
+            <Button x:Name="BtnMaxLeft"
+                    Padding="8,6" Margin="0,0,0,6"
+                    Click="BtnMaxLeft_Click"
+                    ToolTip="Toggle window width between left 50%+full and left 33%+full">
+                <TextBlock TextAlignment="Center">
+                    <Run Text="Width: left + full"/><LineBreak/>
+                    <Run Text="Ctrl+Alt+Shift+Left" FontSize="10" Foreground="Gray"/>
+                </TextBlock>
+            </Button>
+
+            <Separator Margin="0,6"/>
+
+            <Button Content="Refresh app list" Padding="8,4"
+                    Click="BtnRefresh_Click"/>
+        </StackPanel>
+
+        <!-- Monitor list -->
+        <DockPanel Grid.Row="2" Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" Text="Monitors" FontSize="11"
+                       Foreground="Gray" Margin="0,0,0,4"/>
+            <ListBox x:Name="MonitorListBox"
+                     SelectionMode="Single"
+                     SelectionChanged="MonitorListBox_SelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel VerticalAlignment="Center" Margin="2"
+                                    HorizontalAlignment="Left">
+                            <TextBlock Text="{Binding DisplayText}" FontSize="12"
+                                       TextTrimming="CharacterEllipsis" TextAlignment="Left"/>
+                            <TextBlock Text="{Binding DetailText}" FontSize="10"
+                                       Foreground="Gray" TextAlignment="Left"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!-- Monitor action buttons -->
+        <StackPanel Grid.Row="2" Grid.Column="2" VerticalAlignment="Top" Width="140">
+            <TextBlock Text="Monitor" FontSize="11" Foreground="Gray" Margin="0,0,0,4"/>
+
+            <Button x:Name="BtnDetach" Content="Detach"
+                    Padding="8,6" Margin="0,0,0,6"
+                    Click="BtnDetach_Click"
+                    IsEnabled="False"
+                    ToolTip="Detach the selected monitor from the desktop"/>
+
+            <Button x:Name="BtnAttach" Content="Attach"
+                    Padding="8,6" Margin="0,0,0,6"
+                    Click="BtnAttach_Click"
+                    IsEnabled="False"
+                    ToolTip="Re-attach the selected monitor to the desktop"/>
+
+            <Button x:Name="BtnSaveArrangement" Content="Save arrangement"
+                    Padding="8,6" Margin="0,12,0,6"
+                    Click="BtnSaveArrangement_Click"
+                    ToolTip="Save the current monitor positions for this set of monitors"/>
+
+            <Button x:Name="BtnRestoreArrangement" Content="Restore arrangement"
+                    Padding="8,6" Margin="0,0,0,6"
+                    Click="BtnRestoreArrangement_Click"
+                    IsEnabled="False"
+                    ToolTip="Restore saved monitor positions for this set of monitors"/>
+
+            <Button Content="Show layout"
+                    Padding="8,6" Margin="0,12,0,0"
+                    Click="BtnShowLayout_Click"
+                    ToolTip="Show current monitor arrangement"/>
+
+            <Button Content="Open Display Settings"
+                    Padding="8,6" Margin="0,6,0,0"
+                    Click="BtnDisplaySettings_Click"
+                    ToolTip="Open Windows Display settings"/>
+
+            <Button Content="Snap displays"
+                    Padding="8,6" Margin="0,6,0,0"
+                    Click="BtnFineTuneEdges_Click"
+                    ToolTip="Snap display edges that are close but not perfectly aligned"/>
+
+            <TextBlock x:Name="ArrangementStatus" FontSize="11" Foreground="Green"
+                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+        </StackPanel>
+    </Grid>
+</Window>

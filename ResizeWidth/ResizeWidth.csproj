@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("o"))</BuildTimestamp>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BuildTimestamp</_Parameter1>
+      <_Parameter2>$(BuildTimestamp)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ignored_processes.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="monitor_arrangements.txt" CopyToOutputDirectory="PreserveNewest" Condition="Exists('monitor_arrangements.txt')" />
+  </ItemGroup>
+
+  <Target Name="ZipToDownloads" AfterTargets="Build">
+    <PropertyGroup>
+      <DownloadsFolder>C:\Downloads</DownloadsFolder>
+      <ZipFilePath>$(DownloadsFolder)\ResizeWidth-$([System.DateTime]::Now.ToString("yyyy-MM-dd")).zip</ZipFilePath>
+      <RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), '.gitignore'))</RepoRoot>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -Command &quot;if(Test-Path '$(ZipFilePath)'){Remove-Item '$(ZipFilePath)'}; Add-Type -AssemblyName System.IO.Compression.FileSystem; $z=[IO.Compression.ZipFile]::Open('$(ZipFilePath)','Create'); Push-Location '$(RepoRoot)'; git ls-files --cached --others --exclude-standard | ForEach-Object { $full=[IO.Path]::Combine('$(RepoRoot)',$_.Replace('/','\')); [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z,$full,$_) }; Pop-Location; $z.Dispose()&quot;" />
+    <Message Importance="high" Text="Zipped to $(ZipFilePath)" />
+  </Target>
+
+</Project>

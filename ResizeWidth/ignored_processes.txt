@@ -1,0 +1,2 @@
+exact: FluencyDirect
+contains: .scorp.ds - Remote Desktop
