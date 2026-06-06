@@ -31,6 +31,11 @@ namespace ResizeWidth
         private static readonly string _lastResizeFilePath = Path.Combine(
             Path.GetDirectoryName(Environment.ProcessPath)!, "last_resize.txt");
 
+        private static readonly string _snapThresholdFilePath = Path.Combine(
+            Path.GetDirectoryName(Environment.ProcessPath)!, "snap_threshold.txt");
+
+        private int _snapThresholdPx = 100;
+
         // Key = process name (case-insensitive); Value = (extendRight, percent)
         private readonly Dictionary<string, (bool extendRight, int percent)> _lastResizeActions =
             new(StringComparer.OrdinalIgnoreCase);
@@ -78,6 +83,8 @@ namespace ResizeWidth
             LoadArrangementFile();
             LoadLastResizeAction();
             LoadIgnoreFile();
+            LoadSnapThreshold();
+            SnapThresholdBox.Text = _snapThresholdPx.ToString();
             SourceInitialized += MainWindow_SourceInitialized;
             Closed += MainWindow_Closed;
         }
@@ -207,6 +214,40 @@ namespace ResizeWidth
                 File.WriteAllLines(_ignoreFilePath, lines);
             }
             catch { /* best-effort */ }
+        }
+
+        private void LoadSnapThreshold()
+        {
+            try
+            {
+                if (!File.Exists(_snapThresholdFilePath)) return;
+                var text = File.ReadAllText(_snapThresholdFilePath).Trim();
+                if (int.TryParse(text, out int value))
+                    _snapThresholdPx = Math.Clamp(value, 1, 500);
+            }
+            catch { /* best-effort */ }
+        }
+
+        private void SaveSnapThreshold(int value)
+        {
+            try
+            {
+                _snapThresholdPx = Math.Clamp(value, 1, 500);
+                File.WriteAllText(_snapThresholdFilePath, _snapThresholdPx.ToString());
+            }
+            catch { /* best-effort */ }
+        }
+
+        private int GetConfiguredSnapThreshold()
+        {
+            if (int.TryParse(SnapThresholdBox.Text, out int value))
+            {
+                SaveSnapThreshold(value);
+                return _snapThresholdPx;
+            }
+
+            SnapThresholdBox.Text = _snapThresholdPx.ToString();
+            return _snapThresholdPx;
         }
 
         private bool IsWindowIgnored(string processName, string title)
@@ -1425,7 +1466,7 @@ namespace ResizeWidth
             }
             snapLog.AppendLine();
 
-            const int threshold = 100; // pixels — edges closer than this get snapped
+            int threshold = GetConfiguredSnapThreshold();
             bool changed = true;
 
             // Iterate until no more adjustments (edges may cascade)

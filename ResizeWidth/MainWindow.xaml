@@ -170,6 +170,11 @@
                     Click="BtnFineTuneEdges_Click"
                     ToolTip="Snap display edges that are close but not perfectly aligned"/>
 
+            <TextBlock Text="Snap threshold (px)" FontSize="10" Foreground="Gray"
+                       Margin="0,6,0,2"/>
+            <TextBox x:Name="SnapThresholdBox"
+                     Text="100" MaxLength="4" Width="60" HorizontalAlignment="Left"/>
+
             <TextBlock x:Name="ArrangementStatus" FontSize="11" Foreground="Green"
                        TextWrapping="Wrap" Margin="0,4,0,0"/>
 
