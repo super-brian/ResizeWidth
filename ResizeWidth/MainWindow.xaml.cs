@@ -595,12 +595,6 @@ namespace ResizeWidth
             RefreshMonitors();
         }
 
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            RefreshWindows();
-            RefreshMonitors();
-        }
-
         private void BtnMaxRight_Click(object sender, RoutedEventArgs e) =>
             ResizeSelectedWindow(extendRight: true);
 

@@ -71,8 +71,9 @@
             </ListBox>
         </DockPanel>
 
-        <!-- Window action buttons -->
-        <StackPanel Grid.Row="0" Grid.Column="2" VerticalAlignment="Top" Width="140">
+        <!-- Action buttons (continuous, spans both rows) -->
+        <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="2"
+                    VerticalAlignment="Top" Width="140">
             <TextBlock Text="Actions" FontSize="11" Foreground="Gray" Margin="0,0,0,4"/>
 
             <Button x:Name="BtnMaxRight"
@@ -95,42 +96,7 @@
                 </TextBlock>
             </Button>
 
-            <Separator Margin="0,6"/>
-
-            <Button Content="Refresh app list" Padding="8,4"
-                    Click="BtnRefresh_Click"/>
-        </StackPanel>
-
-        <!-- Monitor list -->
-        <DockPanel Grid.Row="2" Grid.Column="0">
-            <TextBlock DockPanel.Dock="Top" Text="Monitors" FontSize="11"
-                       Foreground="Gray" Margin="0,0,0,4"/>
-            <ListBox x:Name="MonitorListBox"
-                     SelectionMode="Single"
-                     SelectionChanged="MonitorListBox_SelectionChanged"
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel VerticalAlignment="Center" Margin="2"
-                                    HorizontalAlignment="Left">
-                            <TextBlock Text="{Binding DisplayText}" FontSize="12"
-                                       TextTrimming="CharacterEllipsis" TextAlignment="Left"/>
-                            <TextBlock Text="{Binding DetailText}" FontSize="10"
-                                       Foreground="Gray" TextAlignment="Left"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </DockPanel>
-
-        <!-- Monitor action buttons -->
-        <StackPanel Grid.Row="2" Grid.Column="2" VerticalAlignment="Top" Width="140">
-            <TextBlock Text="Monitor" FontSize="11" Foreground="Gray" Margin="0,0,0,4"/>
+            <TextBlock Text="Monitor" FontSize="11" Foreground="Gray" Margin="0,12,0,4"/>
 
             <Button x:Name="BtnDetach" Content="Detach"
                     Padding="8,6" Margin="0,0,0,6"
@@ -177,7 +143,34 @@
 
             <TextBlock x:Name="ArrangementStatus" FontSize="11" Foreground="Green"
                        TextWrapping="Wrap" Margin="0,4,0,0"/>
-
         </StackPanel>
+
+        <!-- Monitor list -->
+        <DockPanel Grid.Row="2" Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" Text="Monitors" FontSize="11"
+                       Foreground="Gray" Margin="0,0,0,4"/>
+            <ListBox x:Name="MonitorListBox"
+                     SelectionMode="Single"
+                     SelectionChanged="MonitorListBox_SelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel VerticalAlignment="Center" Margin="2"
+                                    HorizontalAlignment="Left">
+                            <TextBlock Text="{Binding DisplayText}" FontSize="12"
+                                       TextTrimming="CharacterEllipsis" TextAlignment="Left"/>
+                            <TextBlock Text="{Binding DetailText}" FontSize="10"
+                                       Foreground="Gray" TextAlignment="Left"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
     </Grid>
 </Window>
