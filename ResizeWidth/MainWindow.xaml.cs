@@ -837,26 +837,19 @@ namespace ResizeWidth
                 var mon = mi.rcMonitor;   // full physical screen rect
                 var work = mi.rcWork;     // working area (excludes taskbar)
                 int monW = mon.Width;
-                int monH = mon.Height;
 
                 int adjMonW = monW; // fallback to same monitor width
-                int adjMonH = monH;
                 // Find the best monitor on the requested side, even if displays are
                 // vertically offset or separated by a gap.
                 if (TryGetAdjacentMonitorRect(mon, extendRight, out var adjacentMonitor))
                 {
                     adjMonW = adjacentMonitor.Width;
-                    adjMonH = adjacentMonitor.Height;
                 }
 
-                // If the adjacent monitor is portrait (height > width), always use 100%
-                bool adjIsPortrait = adjMonH > adjMonW;
-
-                // Cycle 50% → 70% → 30% → 50% of the adjacent monitor's width,
-                // but only if the window was NOT just restored from maximized
-                // (maximize resets to default 50%).
-                bool isHalf = false;
-                bool is70 = false;
+                    // Cycle 100% → 50% → 30% → 100% of the adjacent monitor's width,
+                    // but only if the window was NOT just restored from maximized.
+                    bool is100 = false;
+                    bool is50 = false;
                 if (!wasMaximized)
                 {
                     NativeMethods.GetWindowRect(hwnd, out var curRect);
@@ -864,39 +857,63 @@ namespace ResizeWidth
 
                     if (extendRight)
                     {
-                        int expectedHalfW = monW + adjMonW / 2;
-                        isHalf = Math.Abs(curRect.Left - mon.Left) <= tolerance
+                        int expected100W = monW + adjMonW;
+                        is100 = Math.Abs(curRect.Left - mon.Left) <= tolerance
+                            && Math.Abs(curRect.Top - work.Top) <= tolerance
+                            && Math.Abs(curRect.Width - expected100W) <= tolerance
+                            && Math.Abs(curRect.Height - work.Height) <= tolerance;
+
+                        int expected50W = monW + adjMonW / 2;
+                        is50 = Math.Abs(curRect.Left - mon.Left) <= tolerance
                               && Math.Abs(curRect.Top - work.Top) <= tolerance
-                              && Math.Abs(curRect.Width - expectedHalfW) <= tolerance
+                            && Math.Abs(curRect.Width - expected50W) <= tolerance
                               && Math.Abs(curRect.Height - work.Height) <= tolerance;
 
-                        int expected70W = monW + adjMonW * 70 / 100;
-                        is70 = Math.Abs(curRect.Left - mon.Left) <= tolerance
+                        int expected30W = monW + adjMonW * 30 / 100;
+                        bool is30 = Math.Abs(curRect.Left - mon.Left) <= tolerance
                               && Math.Abs(curRect.Top - work.Top) <= tolerance
-                              && Math.Abs(curRect.Width - expected70W) <= tolerance
+                            && Math.Abs(curRect.Width - expected30W) <= tolerance
                               && Math.Abs(curRect.Height - work.Height) <= tolerance;
+
+                        if (is30)
+                        {
+                            is100 = false;
+                            is50 = false;
+                        }
                     }
                     else
                     {
-                        int expectedHalfW = monW + adjMonW / 2;
-                        int expectedHalfL = mon.Left - adjMonW / 2;
-                        isHalf = Math.Abs(curRect.Left - expectedHalfL) <= tolerance
+                        int expected100W = monW + adjMonW;
+                        int expected100L = mon.Left - adjMonW;
+                        is100 = Math.Abs(curRect.Left - expected100L) <= tolerance
+                            && Math.Abs(curRect.Top - work.Top) <= tolerance
+                            && Math.Abs(curRect.Width - expected100W) <= tolerance
+                            && Math.Abs(curRect.Height - work.Height) <= tolerance;
+
+                        int expected50W = monW + adjMonW / 2;
+                        int expected50L = mon.Left - adjMonW / 2;
+                        is50 = Math.Abs(curRect.Left - expected50L) <= tolerance
                               && Math.Abs(curRect.Top - work.Top) <= tolerance
-                              && Math.Abs(curRect.Width - expectedHalfW) <= tolerance
+                            && Math.Abs(curRect.Width - expected50W) <= tolerance
                               && Math.Abs(curRect.Height - work.Height) <= tolerance;
 
-                        int expected70W = monW + adjMonW * 70 / 100;
-                        int expected70L = mon.Left - adjMonW * 70 / 100;
-                        is70 = Math.Abs(curRect.Left - expected70L) <= tolerance
+                        int expected30W = monW + adjMonW * 30 / 100;
+                        int expected30L = mon.Left - adjMonW * 30 / 100;
+                        bool is30 = Math.Abs(curRect.Left - expected30L) <= tolerance
                               && Math.Abs(curRect.Top - work.Top) <= tolerance
-                              && Math.Abs(curRect.Width - expected70W) <= tolerance
+                            && Math.Abs(curRect.Width - expected30W) <= tolerance
                               && Math.Abs(curRect.Height - work.Height) <= tolerance;
+
+                        if (is30)
+                        {
+                            is100 = false;
+                            is50 = false;
+                        }
                     }
                 }
 
-                // Cycle: 50% → 70% → 30% → 50% of adjacent monitor width
-                // Portrait monitors always get 100%
-                int percentOfAdj = adjIsPortrait ? 100 : (isHalf ? 70 : is70 ? 30 : 50);
+                    // Cycle: 100% → 50% → 30% → 100% of adjacent monitor width
+                    int percentOfAdj = is100 ? 50 : is50 ? 30 : 100;
                 int extend = adjMonW * percentOfAdj / 100;
 
                 // Persist this action per process so Ctrl+Alt+Shift+Up can replay it
@@ -957,19 +974,14 @@ namespace ResizeWidth
                 var mon = mi.rcMonitor;
                 var work = mi.rcWork;
                 int monW = mon.Width;
-                int monH = mon.Height;
 
                 int adjMonW = monW;
-                int adjMonH = monH;
                 if (TryGetAdjacentMonitorRect(mon, extendRight, out var adjacentMonitor))
                 {
                     adjMonW = adjacentMonitor.Width;
-                    adjMonH = adjacentMonitor.Height;
                 }
 
-                // Portrait monitors always get 100% regardless of saved percent
-                int effectivePercent = (adjMonH > adjMonW) ? 100 : percent;
-                int extend = adjMonW * effectivePercent / 100;
+                int extend = adjMonW * percent / 100;
                 int left   = extendRight ? mon.Left : mon.Left - extend;
 
                 NativeMethods.SetWindowPos(target, IntPtr.Zero,
