@@ -321,10 +321,10 @@ namespace ResizeWidth
             return string.Join(",", ids);
         }
 
-        private void BtnSaveArrangement_Click(object sender, RoutedEventArgs e)
+        private List<(string model, int x, int y, uint w, uint h)>? GetCurrentArrangementEntries()
         {
             var attached = _monitors.Where(m => m.IsAttached).ToList();
-            if (attached.Count == 0) return;
+            if (attached.Count == 0) return null;
 
             var entries = new List<(string model, int x, int y, uint w, uint h)>();
             foreach (var m in attached)
@@ -337,14 +337,47 @@ namespace ResizeWidth
                     entries.Add((ComputeModelUid(m.DevicePath), dm.dmPositionX, dm.dmPositionY, dm.dmPelsWidth, dm.dmPelsHeight));
                 }
             }
+            return entries.Count > 0 ? entries : null;
+        }
 
-            if (entries.Count == 0) return;
+        private static bool ArrangementsMatch(
+            List<(string model, int x, int y, uint w, uint h)> current,
+            List<(string model, int x, int y, uint w, uint h)> saved)
+        {
+            if (current.Count != saved.Count) return false;
+            var lookup = new Dictionary<string, (int x, int y, uint w, uint h)>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (id, x, y, w, h) in saved)
+                lookup[id] = (x, y, w, h);
+            foreach (var (id, x, y, w, h) in current)
+            {
+                if (!lookup.TryGetValue(id, out var pos)) return false;
+                if (pos.x != x || pos.y != y || pos.w != w || pos.h != h) return false;
+            }
+            return true;
+        }
+
+        private void UpdateArrangementButtons()
+        {
+            string key = ComputeSetKey();
+            bool hasSaved = _arrangements.TryGetValue(key, out var saved);
+
+            var current = GetCurrentArrangementEntries();
+            bool matchesSaved = hasSaved && current is not null && ArrangementsMatch(current, saved!);
+            bool canAct = current is not null && !matchesSaved;
+            BtnSaveArrangement.IsEnabled = canAct;
+            BtnRestoreArrangement.IsEnabled = hasSaved && canAct;
+        }
+
+        private void BtnSaveArrangement_Click(object sender, RoutedEventArgs e)
+        {
+            var entries = GetCurrentArrangementEntries();
+            if (entries is null) return;
 
             string key = ComputeSetKey();
             _arrangements[key] = entries;
             SaveArrangementFile();
             ShowArrangementStatus($"Saved for {entries.Count} monitors.");
-            BtnRestoreArrangement.IsEnabled = true;
+            UpdateArrangementButtons();
         }
 
         private void BtnRestoreArrangement_Click(object sender, RoutedEventArgs e)
@@ -399,6 +432,7 @@ namespace ResizeWidth
                 ShowArrangementStatus("Could not match monitors.");
 
             RefreshMonitors();
+            UpdateArrangementButtons();
         }
 
         private DispatcherTimer? _statusTimer;
@@ -593,6 +627,7 @@ namespace ResizeWidth
         {
             RefreshWindows();
             RefreshMonitors();
+            UpdateArrangementButtons();
         }
 
         private void BtnMaxRight_Click(object sender, RoutedEventArgs e) =>
@@ -1880,9 +1915,6 @@ namespace ResizeWidth
             }
             if (!restored && _monitors.Count > 0)
                 MonitorListBox.SelectedIndex = 0;
-
-            // Enable/disable Restore arrangement button based on whether a saved arrangement exists
-            BtnRestoreArrangement.IsEnabled = _arrangements.ContainsKey(ComputeSetKey());
         }
 
         // ── Helpers ────────────────────────────────────────────────────────

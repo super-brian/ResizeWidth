@@ -10,7 +10,7 @@ namespace ResizeWidth
     public partial class SnapResultDialog : Window
     {
         private readonly DispatcherTimer _timer;
-        private int _remaining = 5;
+        private int _remaining = 15;
         private readonly List<(string deviceName, int x, int y, int w, int h, uint orientation)>? _originalPositions;
         private Action? _onReverted;
 
